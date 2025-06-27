@@ -2,7 +2,7 @@
 
 ## Usage
 
-Test by running test.bat:
+Test by running test.bat: 
 
 ```powershell
 .\src\compiler.bat .\test\test.bat
