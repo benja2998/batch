@@ -1,1 +1,3 @@
-Hello, World!
+# Code of Conduct
+
+* Be respectful.
