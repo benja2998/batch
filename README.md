@@ -30,8 +30,10 @@ You can also keep the asm code by running it like this:
 * GOTO
 * :LABEL
 
-## Windows for ARM compatibility
 > [!IMPORTANT]
+>
+## Windows for ARM compatibility
+>
 > While it is not guaranteed, if you're on aarch64 you may be able to run compiled output via the built-in emulation.
 
 ## Supported OSes
