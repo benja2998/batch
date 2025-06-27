@@ -11,13 +11,13 @@ Test by running test.bat:
 You can also keep the asm code by running it like this:
 
 ```powershell
-.\src\compiler.bat .\test\test.bat keep_asm # keep_asm HAS to be argument 2 because i didn't think of it since the start
+.\src\compiler.bat .\test\test.bat keep_asm # keep_asm HAS to be argument 2
 ```
 
 ## Limitations
 
 * Batch file must contain an exit that will always be executed.
-* Not all batch commands are implemented.
+* Not all batch commands are implemented. We plan to implement all commands in the future.
 
 ## Non-limitations
 
@@ -39,4 +39,10 @@ You can also keep the asm code by running it like this:
 ## Supported OSes
 
 * Windows
-* Linux support is planned
+
+## TODO
+
+* Add Linux support (medium priority)
+* Add macOS support (low priority)
+* Support all batch features (high priority)
+* Properly handle `@echo off`/`@echo on` instead of ignoring them (medium priority)

@@ -1,5 +1,8 @@
 @echo off
 
+rem This is a remark
+:: This is a broken label
+
 echo Hello world!
 echo.
 

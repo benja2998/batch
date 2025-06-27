@@ -83,9 +83,10 @@ set "section_data=false"
 set "section_text=false"
 set "is_label=false"
 
+:: PARSE LOOP ::
 for /f "tokens=*" %%i in ('type "!source_file!"') do (
     set "line=%%i"
-    echo Processing line: !line!
+    echo [1mParsing line: !line![0m
 
     rem Set command to first word in the line
     for /f "tokens=1,*" %%j in ("!line!") do (
@@ -115,7 +116,6 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
             echo Broken label detected, skipping...
             set "is_label=false"
             set "command="
-            exit /b 1
         )
     ) else (
         set "is_label=false"
@@ -124,17 +124,6 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
     rem Remove '@' from silent command
     if "!command_silent!"=="true" (
         set "command=!command:~1!"
-        echo Cleaned silent command: !command!
-
-        if "!command!"=="" (
-            echo Error: Silent command cannot be empty.
-            exit /b 1
-        )
-
-        if "!command!"=="echo" (
-            rem Empty rest for echo command
-            set "rest="
-        )
     )
 
     rem Skip empty command
@@ -142,7 +131,6 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
         echo Empty command, skipping...
         set "is_label=false"
         set "command="
-        exit /b 1
     )
 
     if "!command!"=="echo." (
@@ -232,7 +220,7 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
     )
 )
 
-echo Parsing complete. Compiling file "!source_file!" to ASM file "!source_file_no_ext!.asm"...
+echo [1mParsing complete. Compiling file "!source_file!" to ASM file "!source_file_no_ext!.asm"...[0m
 
 if "!section_text!"=="false" (
     echo Adding section .text.
@@ -242,8 +230,10 @@ if "!section_text!"=="false" (
     set "section_text=true"
 )
 
+:: COMPILE LOOP ::
 for /f "tokens=*" %%i in ('type "!source_file!"') do (
     set "line=%%i"
+    echo [1mCompiling line: !line![0m
 
     rem Set command to first word in the line
     for /f "tokens=1,*" %%j in ("!line!") do (
@@ -262,6 +252,11 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
     if "!command:~0,1!"==":" (
         set "is_label=true"
         set "command=!command:~1!"
+        if "!command!"==":" (
+            echo Broken label detected. Skipping...
+            set "is_label=false"
+            set "command="
+        )
     ) else (
         set "is_label=false"
     )
@@ -270,19 +265,19 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
     if "!command_silent!"=="true" (
         set "command=!command:~1!"
 
-        if "!command!"=="" (
-            echo Error: Silent command cannot be empty.
-            exit /b 1
-        )
-
         if "!command!"=="echo" (
-            rem Empty rest for echo command
-            set "rest="
+            rem TODO: implement proper handling
+            if "!rest!"=="off" (
+                set "rest="
+            ) else if "!rest!"=="on" (
+                set "rest="
+            )
         )
     )
 
     rem Skip empty command
     if "!command!"=="" (
+        echo Empty command. Skipping...
         set "is_label=false"
         set "command="
     )
@@ -365,7 +360,7 @@ nasm -f win64 "!source_file_no_ext!.asm" -o "!source_file_no_ext!.obj"
 
 echo Running: lld-link "!source_file_no_ext!.obj" kernel32.lib /subsystem:console /entry:_start /out:"!source_file_no_ext!.exe"
 
-lld-link test.obj kernel32.lib /subsystem:console /entry:_start /out:test.exe
+lld-link "!source_file_no_ext!.obj" kernel32.lib /subsystem:console /entry:_start /out:"!source_file_no_ext!.exe"
 
 echo Deleting temporary files...
 
