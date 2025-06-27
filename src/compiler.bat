@@ -74,7 +74,7 @@ if /i "!arch!"=="AMD64" (
 )
 
 :parse
-echo Parsing source file "!source_file!"...
+echo [1mParsing source file "!source_file!"...[0m
 
 set "echo_included=false"
 set "process_included=false"
@@ -230,6 +230,9 @@ if "!section_text!"=="false" (
     set "section_text=true"
 )
 
+:: Start timing compilation
+set "starttime=%time%"
+
 :: COMPILE LOOP ::
 for /f "tokens=*" %%i in ('type "!source_file!"') do (
     set "line=%%i"
@@ -322,9 +325,9 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
                     echo call WriteConsoleA
                     echo add rsp, 40
                 )
-                echo Compiled echo command successfully
+                echo [32mCompiled echo command successfully[0m
             ) else (
-                echo No text to echo, skipping...
+                echo [33mNo text to echo, skipping...[0m
             )
         ) else if "!command!"=="exit" (
             >> "!source_file_no_ext!.asm" (
@@ -332,16 +335,16 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
                 echo xor ecx, ecx
                 echo call ExitProcess
             )
-            echo Compiled exit command successfully
+            echo [32mCompiled exit command successfully[0m
         ) else if "!command!"=="goto" (
             if not "!rest!"=="" (
                 >> "!source_file_no_ext!.asm" (
                     echo ; goto !rest!
                     echo jmp !rest!
                 )
-                echo Compiled goto command successfully
+                echo [32mCompiled goto command successfully[0m
             ) else (
-                echo Error: goto requires a label.
+                echo [31mError: goto requires a label.[0m
                 exit /b 1
             )
         )
@@ -375,4 +378,51 @@ del "%TEMP%\temp.txt" /s /q >nul 2>&1
 del "%TEMP%\temp_hash.txt" /s /q >nul 2>&1
 del "%TEMP%\temp.asm" /s /q >nul 2>&1
 
-echo Compilation complete. Output file: "!source_file_no_ext!.exe"
+:: End timing compilation
+set "endtime=%time%"
+
+:: Calculate elapsed time
+call :TimeDiff "%starttime%" "%endtime%" elapsed
+
+echo [1mCompilation time: !elapsed![0m
+
+exit /b
+
+:: Function to calculate time difference between %1=start and %2=end in HH:MM:SS.xx format, output in variable %3
+:TimeDiff
+setlocal
+set "start=%~1"
+set "end=%~2"
+
+rem Parse start time
+for /f "tokens=1-4 delims=:.," %%a in ("%start%") do (
+    set /a "sh=1%%a - 100"
+    set /a "sm=1%%b - 100"
+    set /a "ss=1%%c - 100"
+    set /a "sf=1%%d - 100"
+)
+
+rem Parse end time
+for /f "tokens=1-4 delims=:.," %%a in ("%end%") do (
+    set /a "eh=1%%a - 100"
+    set /a "em=1%%b - 100"
+    set /a "es=1%%c - 100"
+    set /a "ef=1%%d - 100"
+)
+
+rem Convert start and end to centiseconds
+set /a "start_cs=(((sh*60)+sm)*60+ss)*100+sf"
+set /a "end_cs=(((eh*60)+em)*60+es)*100+ef"
+
+rem Calculate difference (handle midnight wrap)
+set /a "diff=end_cs - start_cs"
+if %diff% lss 0 set /a "diff+=24*60*60*100"
+
+rem Convert back to HH:MM:SS.cc
+set /a "dh=diff/(60*60*100)"
+set /a "dm=(diff/(60*100))%%60"
+set /a "ds=(diff/100)%%60"
+set /a "df=diff%%100"
+
+endlocal & set "%~3=%dh%:%dm:~-2%:%ds:~-2%.%df:~-2%"
+goto :eof
