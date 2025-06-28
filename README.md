@@ -29,6 +29,7 @@ You can also keep the asm code by running it like this:
 * ECHO
 * GOTO
 * :LABEL
+* All other batch commands are implemented via WinExec fallback and will not get the better performance.
 
 ## Supported OSes
 
@@ -45,4 +46,5 @@ You can also keep the asm code by running it like this:
 * Add Linux support (medium priority)
 * Add macOS support (low priority)
 * Support all batch features (high priority)
-* Properly handle `@echo off`/`@echo on` instead of ignoring them (medium priority)
+* Properly handle `@echo off`/`@echo on` instead of ignoring them (low priority)
+* Ability to compile itself (high priority)

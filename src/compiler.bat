@@ -216,6 +216,47 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
                 move /y "%TEMP%\temp.asm" "!source_file_no_ext!.asm" >nul
                 set "process_included=true"
             )
+            
+            echo "!rest!" > "%TEMP%\temp.txt"
+            certutil -hashfile "%TEMP%\temp.txt" SHA256 > "%TEMP%\temp_hash.txt"
+
+            set count=0
+            for /f "delims=" %%a in ('type %TEMP%\temp_hash.txt') do (
+                set /a count+=1
+                if !count! equ 2 (
+                    set "hash=%%a"
+                )
+            )
+
+            set "hash=!hash: =!"
+
+            set "hash=l!hash!"
+
+            if "!section_data!"=="false" (
+                echo Adding section .data.
+                echo section .data >> "!source_file_no_ext!.asm"
+                set "section_data=true"
+            )
+
+            set "rest=!rest:"=\"!"
+            set "rest=cmd.exe /c @!command! !rest!"
+
+            rem Check if the !source_file_no_ext!.asm contains !hash! db "!rest!", 0
+
+            findstr /c:"!hash! db \"!rest!\", 0" "!source_file_no_ext!.asm" >nul
+
+            if !errorlevel! neq 0 (
+                echo Adding new text to ASM file
+                if "!rest!"=="NEW_LINE" (
+                    echo    !hash! db 0x0D, 0x0A >> "!source_file_no_ext!.asm"
+                ) else (
+                    echo    !hash! db "!rest!", 0Dh, 0Ah, 0 >> "!source_file_no_ext!.asm"
+                )
+                echo Adding new text to ASM file: !hash!_len equ $ - !hash!
+                echo    !hash!_len equ $ - !hash! >> "!source_file_no_ext!.asm"
+            ) else (
+                echo Text already exists in ASM file, skipping...
+            )
         )
     )
 )
@@ -346,6 +387,46 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
             ) else (
                 echo [31mError: goto requires a label.[0m
                 exit /b 1
+            )
+        ) else if "!command!"=="rem" (
+            echo Skipping remark...
+        ) else (
+            if "!command!"=="" (
+                rem Nothing
+            ) else (
+                rem WinExec fallback for unrecognized commands
+                echo Treating as WinExec command: !command! !rest!
+                
+                echo "!rest!" > "%TEMP%\temp.txt"
+                certutil -hashfile "%TEMP%\temp.txt" SHA256 > "%TEMP%\temp_hash.txt"
+    
+                set count=0
+                for /f "delims=" %%a in ('type %TEMP%\temp_hash.txt') do (
+                    set /a count+=1
+                    if !count! equ 2 (
+                        set "hash=%%a"
+                    )
+                )
+    
+                set "hash=!hash: =!"
+                set "hash=l!hash!"
+    
+                if "!section_data!"=="false" (
+                    echo section .data >> "!source_file_no_ext!.asm"
+                    set "section_data=true"
+                )
+    
+                >> "!source_file_no_ext!.asm" (
+                    echo ; !command! !rest!
+                    echo sub rsp, 32
+                    echo lea rcx, [rel !hash!]
+                    echo mov edx, 1  ; SW_SHOWNORMAL
+                    echo and rsp, -16
+                    echo call WinExec
+                    echo add rsp, 32
+                )
+
+                echo [32mCompiled WinExec command successfully[0m
             )
         )
     )
