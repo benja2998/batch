@@ -360,7 +360,7 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
         ) else if "!command!"=="goto" (
             if not "!rest!"=="" (
                 >> "!output_asm_file!" (
-                    echo ; goto !rest! 
+                    echo ; goto !rest!
                     echo jmp !rest!
                 )
                 echo [32mCompiled goto command successfully[0m
