@@ -372,7 +372,7 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
             )
         ) else if "!command!"=="exit" (
             >> "!source_file_no_ext!.asm" (
-                echo ; exit 
+                echo ; exit
                 echo xor ecx, ecx
                 echo call ExitProcess
             )
