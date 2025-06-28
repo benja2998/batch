@@ -2,16 +2,11 @@
 
 rem This is a remark
 :: This is a broken label
+echo Hello, world!
+goto type_license
 
-echo Hello world!
-echo.
+:type_license
 
-:done
-
-echo Almost done!
-goto finally_done
-
-:finally_done
-
-echo Done!
+type ..\LICENSE
+pause >nul
 exit /b
