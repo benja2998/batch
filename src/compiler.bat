@@ -42,20 +42,36 @@ set "source_file=%~1"
 set "source_file_no_ext=%~n1"
 
 echo Source file: !source_file!
-echo Output ASM file: !source_file_no_ext!.asm
+set /p output_executable=Output executable file: 
+if "!output_executable!"=="" (
+    echo [31mError: File name cannot be empty[0m
+    exit /b 1
+)
+
+rem Check if output_executable ends with .exe
+set "ext=!output_executable:~-4!"
+if /i not "!ext!"==".exe" (
+    echo [31mError: Output file must have a .exe extension[0m
+    exit /b 1
+)
+
+set "output_executable_no_ext=!output_executable!"
+for %%F in ("!output_executable_no_ext!") do set "output_executable_no_ext=%%~nF"
+echo Output executable without extension: !output_executable_no_ext!
+set "output_asm_file=!output_executable_no_ext!.asm"
 
 if not exist "!source_file!" (
     echo Source file "!source_file!" does not exist.
     exit /b 1
 )
 
-if exist "!source_file_no_ext!.asm" (
-    echo Output file "!source_file_no_ext!.asm" already exists. Deleting it...
-    del "!source_file_no_ext!.asm"
+if exist "!output_asm_file!" (
+    echo Output file "!output_asm_file!" already exists. Deleting it...
+    del "!output_asm_file!"
 )
 
-echo extern ExitProcess >> "!source_file_no_ext!.asm"
-echo extern GetStdHandle >> "!source_file_no_ext!.asm"
+echo extern ExitProcess >> "!output_asm_file!"
+echo extern GetStdHandle >> "!output_asm_file!"
 
 rem Check architecture
 set "arch=!PROCESSOR_ARCHITECTURE!"
@@ -150,9 +166,9 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
                 echo Including WriteConsoleA...
                 (
                     echo extern WriteConsoleA
-                    type !source_file_no_ext!.asm
+                    type !output_asm_file!
                 ) > "%TEMP%\temp.asm"
-                move /y "%TEMP%\temp.asm" "!source_file_no_ext!.asm" >nul
+                move /y "%TEMP%\temp.asm" "!output_asm_file!" >nul
                 set "echo_included=true"
             )
 
@@ -161,40 +177,28 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
             if "!rest!"=="" (
                 echo No text to echo, skipping...
             ) else (
-                echo "!rest!" > "%TEMP%\temp.txt"
-                certutil -hashfile "%TEMP%\temp.txt" SHA256 > "%TEMP%\temp_hash.txt"
-
-                set count=0
-                for /f "delims=" %%a in ('type %TEMP%\temp_hash.txt') do (
-                    set /a count+=1
-                    if !count! equ 2 (
-                        set "hash=%%a"
-                    )
-                )
-
-                set "hash=!hash: =!"
-
-                set "hash=l!hash!"
+                call "%~dp0lib\hash" "!rest!"
+                for /f "usebackq delims=" %%A in ("%TEMP%\hash.txt") do set "hash=%%A"
 
                 if "!section_data!"=="false" (
                     echo Adding section .data.
-                    echo section .data >> "!source_file_no_ext!.asm"
+                    echo section .data >> "!output_asm_file!"
                     set "section_data=true"
                 )
 
-                rem Check if the !source_file_no_ext!.asm contains !hash! db "!rest!", 0
+                rem Check if the !output_asm_file! contains !hash! db "!rest!", 0
 
-                findstr /c:"!hash! db \"!rest!\", 0" "!source_file_no_ext!.asm" >nul
+                findstr /c:"!hash! db \"!rest!\", 0" "!output_asm_file!" >nul
 
                 if !errorlevel! neq 0 (
                     echo Adding new text to ASM file
                     if "!rest!"=="NEW_LINE" (
-                        echo    !hash! db 0x0D, 0x0A >> "!source_file_no_ext!.asm"
+                        echo    !hash! db 0x0D, 0x0A >> "!output_asm_file!"
                     ) else (
-                        echo    !hash! db "!rest!", 0Dh, 0Ah, 0 >> "!source_file_no_ext!.asm"
+                        echo    !hash! db "!rest!", 0Dh, 0Ah, 0 >> "!output_asm_file!"
                     )
                     echo Adding new text to ASM file: !hash!_len equ $ - !hash!
-                    echo    !hash!_len equ $ - !hash! >> "!source_file_no_ext!.asm"
+                    echo    !hash!_len equ $ - !hash! >> "!output_asm_file!"
                 ) else (
                     echo Text already exists in ASM file, skipping...
                 )
@@ -211,49 +215,37 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
                 echo Including WinExec...
                 (
                     echo extern WinExec
-                    type !source_file_no_ext!.asm
+                    type !output_asm_file!
                 ) > "%TEMP%\temp.asm"
-                move /y "%TEMP%\temp.asm" "!source_file_no_ext!.asm" >nul
+                move /y "%TEMP%\temp.asm" "!output_asm_file!" >nul
                 set "process_included=true"
             )
             
-            echo "!rest!" > "%TEMP%\temp.txt"
-            certutil -hashfile "%TEMP%\temp.txt" SHA256 > "%TEMP%\temp_hash.txt"
-
-            set count=0
-            for /f "delims=" %%a in ('type %TEMP%\temp_hash.txt') do (
-                set /a count+=1
-                if !count! equ 2 (
-                    set "hash=%%a"
-                )
-            )
-
-            set "hash=!hash: =!"
-
-            set "hash=l!hash!"
+            call "%~dp0lib\hash" "!rest!"
+            for /f "usebackq delims=" %%A in ("%TEMP%\hash.txt") do set "hash=%%A"
 
             if "!section_data!"=="false" (
                 echo Adding section .data.
-                echo section .data >> "!source_file_no_ext!.asm"
+                echo section .data >> "!output_asm_file!"
                 set "section_data=true"
             )
 
             set "rest=!rest:"=\"!"
             set "rest=cmd.exe /c @!command! !rest!"
 
-            rem Check if the !source_file_no_ext!.asm contains !hash! db "!rest!", 0
+            rem Check if the !output_asm_file! contains !hash! db "!rest!", 0
 
-            findstr /c:"!hash! db \"!rest!\", 0" "!source_file_no_ext!.asm" >nul
+            findstr /c:"!hash! db \"!rest!\", 0" "!output_asm_file!" >nul
 
             if !errorlevel! neq 0 (
                 echo Adding new text to ASM file
                 if "!rest!"=="NEW_LINE" (
-                    echo    !hash! db 0x0D, 0x0A >> "!source_file_no_ext!.asm"
+                    echo    !hash! db 0x0D, 0x0A >> "!output_asm_file!"
                 ) else (
-                    echo    !hash! db "!rest!", 0Dh, 0Ah, 0 >> "!source_file_no_ext!.asm"
+                    echo    !hash! db "!rest!", 0Dh, 0Ah, 0 >> "!output_asm_file!"
                 )
                 echo Adding new text to ASM file: !hash!_len equ $ - !hash!
-                echo    !hash!_len equ $ - !hash! >> "!source_file_no_ext!.asm"
+                echo    !hash!_len equ $ - !hash! >> "!output_asm_file!"
             ) else (
                 echo Text already exists in ASM file, skipping...
             )
@@ -261,13 +253,13 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
     )
 )
 
-echo [1mParsing complete. Compiling file "!source_file!" to ASM file "!source_file_no_ext!.asm"...[0m
+echo [1mParsing complete. Compiling file "!source_file!" to ASM file "!output_asm_file!"...[0m
 
 if "!section_text!"=="false" (
     echo Adding section .text.
-    echo section .text >> "!source_file_no_ext!.asm"
-    echo    global _start >> "!source_file_no_ext!.asm"
-    echo _start: >> "!source_file_no_ext!.asm"
+    echo section .text >> "!output_asm_file!"
+    echo    global _start >> "!output_asm_file!"
+    echo _start: >> "!output_asm_file!"
     set "section_text=true"
 )
 
@@ -333,26 +325,14 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
 
     rem Implement command handling
     if "!is_label!"=="true" (
-        echo !command!: >> "!source_file_no_ext!.asm"
+        echo !command!: >> "!output_asm_file!"
     ) else (
         if "!command!"=="echo" (
             if not "!rest!"=="" (
-                echo "!rest!" > "%TEMP%\temp.txt"
-                certutil -hashfile "%TEMP%\temp.txt" SHA256 > "%TEMP%\temp_hash.txt"
+                call "%~dp0lib\hash" "!rest!"
+                for /f "usebackq delims=" %%A in ("%TEMP%\hash.txt") do set "hash=%%A"
 
-                set count=0
-                for /f "delims=" %%a in ('type %TEMP%\temp_hash.txt') do (
-                    set /a count+=1
-                    if !count! equ 2 (
-                        set "hash=%%a"
-                    )
-                )
-
-                set "hash=!hash: =!"
-
-                set "hash=l!hash!"
-
-                >> "!source_file_no_ext!.asm" (
+                >> "!output_asm_file!" (
                     echo ; echo !rest!
                     echo sub rsp, 40
                     echo mov ecx, -11
@@ -371,7 +351,7 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
                 echo [33mNo text to echo, skipping...[0m
             )
         ) else if "!command!"=="exit" (
-            >> "!source_file_no_ext!.asm" (
+            >> "!output_asm_file!" (
                 echo ; exit
                 echo xor ecx, ecx
                 echo call ExitProcess
@@ -379,7 +359,7 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
             echo [32mCompiled exit command successfully[0m
         ) else if "!command!"=="goto" (
             if not "!rest!"=="" (
-                >> "!source_file_no_ext!.asm" (
+                >> "!output_asm_file!" (
                     echo ; goto !rest!
                     echo jmp !rest!
                 )
@@ -397,26 +377,15 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
                 rem WinExec fallback for unrecognized commands
                 echo Treating as WinExec command: !command! !rest!
                 
-                echo "!rest!" > "%TEMP%\temp.txt"
-                certutil -hashfile "%TEMP%\temp.txt" SHA256 > "%TEMP%\temp_hash.txt"
-    
-                set count=0
-                for /f "delims=" %%a in ('type %TEMP%\temp_hash.txt') do (
-                    set /a count+=1
-                    if !count! equ 2 (
-                        set "hash=%%a"
-                    )
-                )
-    
-                set "hash=!hash: =!"
-                set "hash=l!hash!"
+                call "%~dp0lib\hash" "!rest!"
+                for /f "usebackq delims=" %%A in ("%TEMP%\hash.txt") do set "hash=%%A"
     
                 if "!section_data!"=="false" (
-                    echo section .data >> "!source_file_no_ext!.asm"
+                    echo section .data >> "!output_asm_file!"
                     set "section_data=true"
                 )
     
-                >> "!source_file_no_ext!.asm" (
+                >> "!output_asm_file!" (
                     echo ; !command! !rest!
                     echo sub rsp, 32
                     echo lea rcx, [rel !hash!]
@@ -433,30 +402,32 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
 )
 
 (
-    echo ; AUTOMATICALLY GENERATED FILE. DO NOT EDIT. EDIT !source_file_no_ext!.bat INSTEAD.
-    type "!source_file_no_ext!.asm"
+    echo ; Compiled from !source_file! by the "compiler.bat" compiler.
+    echo ; This is NOT the original source code.
+    type "!output_asm_file!"
 ) > "%TEMP%\temp.asm"
-move /y "%TEMP%\temp.asm" "!source_file_no_ext!.asm" >nul
+move /y "%TEMP%\temp.asm" "!output_asm_file!" >nul
 
-echo Running: nasm -f win64 "!source_file_no_ext!.asm" -o "!source_file_no_ext!.obj"
+echo Running: nasm -f win64 "!output_asm_file!" -o "!output_executable_no_ext!.obj"
 
-nasm -f win64 "!source_file_no_ext!.asm" -o "!source_file_no_ext!.obj"
+nasm -f win64 "!output_asm_file!" -o "!output_executable_no_ext!.obj"
 
-echo Running: lld-link "!source_file_no_ext!.obj" kernel32.lib /subsystem:console /entry:_start /out:"!source_file_no_ext!.exe"
+echo Running: lld-link "!output_executable_no_ext!.obj" kernel32.lib /subsystem:console /entry:_start /out:"!output_executable!"
 
-lld-link "!source_file_no_ext!.obj" kernel32.lib /subsystem:console /entry:_start /out:"!source_file_no_ext!.exe"
+lld-link "!output_executable_no_ext!.obj" kernel32.lib /subsystem:console /entry:_start /out:"!output_executable!"
 
 echo Deleting temporary files...
 
-rem Only run del "!source_file_no_ext!.asm" /s /q >nul 2>&1 if %~2 is not set to "keep_asm"
+rem Only run del "!output_asm_file!" /s /q >nul 2>&1 if %~2 is not set to "keep_asm"
 if not "%~2"=="keep_asm" (
-    del "!source_file_no_ext!.asm" /s /q >nul 2>&1
+    del "!output_asm_file!" /s /q >nul 2>&1
 ) else (
     echo Not deleting .asm file as keep_asm is the second argument
 )
-del "!source_file_no_ext!.obj" /s /q >nul 2>&1
+del "!output_executable_no_ext!.obj" /s /q >nul 2>&1
 del "%TEMP%\temp.txt" /s /q >nul 2>&1
 del "%TEMP%\temp_hash.txt" /s /q >nul 2>&1
+del "%TEMP%\hash.txt" /s /q >nul 2>&1
 del "%TEMP%\temp.asm" /s /q >nul 2>&1
 
 :: End timing compilation
