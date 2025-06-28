@@ -25,6 +25,12 @@ jobs:
         id: get_commit
         run: echo "COMMIT_HASH=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
+      - name: Create package.tar.gz
+        run: tar -czvf package.tar.gz -C src .
+
+      - name: Create package.zip
+        run: zip -r package.zip src
+
       - name: Create stable release and upload assets
         uses: softprops/action-gh-release@v2
         with:
@@ -33,7 +39,9 @@ jobs:
           body: |
             Automated stable release for commit `${{ env.COMMIT_HASH }}`
           files: |
-            src/compiler.bat
+            package.tar.gz
+            package.zip
             test/test.bat
+            LICENSE
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
