@@ -23,24 +23,39 @@ jobs:
 
       - name: Get commit hash
         id: get_commit
-        run: echo "COMMIT_HASH=$(git rev-parse HEAD)" >> $GITHUB_ENV
+        run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            RANGE=""
+          else
+            RANGE="$LAST_TAG..HEAD"
+          fi
+
+          NOTES=$(git log $RANGE --pretty=format:"* %s%n> %b%n" --reverse)
+
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "$NOTES" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Create package.tar.gz
-        run: tar -czvf package.tar.gz -C src .
+        run: tar -czvf ${{ env.COMMIT_HASH }}.tar.gz -C src .
 
       - name: Create package.zip
-        run: zip -r package.zip src
+        run: zip -r ${{ env.COMMIT_HASH }}.zip src
 
       - name: Create stable release and upload assets
         uses: softprops/action-gh-release@v2
         with:
           name: stable-${{ env.COMMIT_HASH }}
           tag_name: stable-${{ env.COMMIT_HASH }}
-          body: |
-            Automated stable release for commit `${{ env.COMMIT_HASH }}`
+          body: ${{ env.RELEASE_NOTES }}
           files: |
-            package.tar.gz
-            package.zip
+            ${{ env.COMMIT_HASH }}.tar.gz
+            ${{ env.COMMIT_HASH }}.zip
             test/test.bat
             LICENSE
         env:
