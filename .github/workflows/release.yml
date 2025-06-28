@@ -35,10 +35,14 @@ jobs:
             RANGE="$LAST_TAG..HEAD"
           fi
 
-          NOTES=$(git log $RANGE --pretty=format:"* %s%n> %b%n" --reverse)
+          # Save the logs with proper newlines
+          git log $RANGE --pretty=format:"* %s%n> %b%n" --reverse > release_notes.txt
+
+          # Escape % characters for GH Actions env file
+          sed 's/%/%25/g; s/\r/%0D/g; s/\n/%0A/g' release_notes.txt > release_notes_escaped.txt
 
           echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
-          echo "$NOTES" >> $GITHUB_ENV
+          cat release_notes_escaped.txt >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
       - name: Create package.tar.gz
