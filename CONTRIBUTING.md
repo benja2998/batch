@@ -1,29 +1,12 @@
-# Contributing to compiler.bat
+# Contributing to benja2998/batch
 
 We welcome contributions from the community, but they must follow these guidelines:
 
 * Your code should be tested.
-    To test the code, run this in a command prompt in the directory that contains the script:
-
-    ```batch
-    compiler.bat ..\test\test.bat keep_asm
-    ```
 
 * Your code should follow the style of the rest of the code.
   * Use proper tabbing.
-
-    For example, do this:
-        ```batch
-        if "%foo%"=="bar" (
-            echo foo
-        )
-        ```
-        And not this:
-        ```batch
-        if "%foo%"=="bar" (
-        echo foo
-        )
-        ```
+  * Use proper indentation.
 * Your code should have comments documenting what it does.
 
     For example, do this:
@@ -41,12 +24,12 @@ We welcome contributions from the community, but they must follow these guidelin
 
 ## Where to start?
 
-Visit [this link](https://github.com/benja2998/compiler.bat/fork) to fork the compiler.bat repository.
+Visit [this link](https://github.com/benja2998/batch/fork) to fork the benja2998/batch repository.
 
 Clone your fork to your local machine:
 
 ```bash
-git clone git@github.com:your-username/compiler.bat.git
+git clone git@github.com:your-username/batch.git
 ```
 
 From there, you can make changes to the code.

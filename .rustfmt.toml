@@ -1,0 +1,68 @@
+# rustfmt.toml
+
+# General settings
+edition = "2021"  # Align with the latest stable Rust edition
+max_width = 100  # Set maximum line width
+hard_tabs = false  # Use spaces instead of tabs
+tab_spaces = 4  # Number of spaces per tab
+newline_style = "Unix"  # Use Unix-style line endings
+indent_style = "Block"  # Block-style indentation
+use_small_heuristics = "Max"  # Apply small heuristics to maximize line usage
+
+# Function and argument formatting
+fn_single_line = true  # Single-line functions for brevity
+fn_params_layout = "Tall"  # Stack function arguments vertically
+fn_call_width = 60  # Limit function call width
+attr_fn_like_width = 70  # Limit width for function-like attributes
+struct_lit_width = 18  # Limit width for struct literals
+struct_variant_width = 35  # Limit width for struct variants
+array_width = 60  # Limit width for arrays
+chain_width = 60  # Limit width for method chains
+single_line_if_else_max_width = 50  # Limit width for single-line if-else expressions
+
+# Comment formatting
+wrap_comments = true  # Wrap comments to fit within max_width
+format_code_in_doc_comments = false  # Do not format code in doc comments
+comment_width = 100  # Set comment line width
+normalize_comments = false  # Do not normalize comments
+normalize_doc_attributes = false  # Do not normalize doc attributes
+format_strings = false  # Do not format strings
+format_macro_matchers = false  # Do not format macro matchers
+format_macro_bodies = true  # Format macro bodies
+
+# Import formatting
+imports_indent = "Block"  # Indent imports in block style
+imports_layout = "Mixed"  # Use mixed import layout
+imports_granularity = "Module"  # Group imports by module
+group_imports = "StdExternalCrate"  # Group imports by standard and external crates
+reorder_imports = true  # Reorder imports alphabetically
+reorder_modules = true  # Reorder modules alphabetically
+reorder_impl_items = false  # Do not reorder impl items
+
+# Brace and block formatting
+brace_style = "AlwaysNextLine"  # Place opening braces on the next line
+control_brace_style = "AlwaysSameLine"  # Place braces for control flow on the same line
+trailing_semicolon = true  # Include trailing semicolons
+trailing_comma = "Vertical"  # Use vertical trailing commas
+match_block_trailing_comma = false  # Do not use trailing commas in match blocks
+
+# Miscellaneous settings
+empty_item_single_line = true  # Place empty items on a single line
+struct_lit_single_line = true  # Place struct literals on a single line
+where_single_line = false  # Do not place where clauses on a single line
+inline_attribute_width = 0  # Do not limit width for inline attributes
+format_generated_files = true  # Format generated files
+merge_derives = true  # Merge derive attributes
+use_try_shorthand = false  # Do not use try shorthand
+use_field_init_shorthand = false  # Do not use field init shorthand
+force_explicit_abi = true  # Force explicit ABI
+condense_wildcard_suffixes = false  # Do not condense wildcard suffixes
+color = "Auto"  # Use automatic coloring
+unstable_features = false  # Do not use unstable features
+disable_all_formatting = false  # Do not disable all formatting
+skip_children = false  # Do not skip formatting for child items
+show_parse_errors = true  # Do not hide parse errors
+error_on_line_overflow = false  # Do not error on line overflow
+error_on_unformatted = false  # Do not error on unformatted code
+emit_mode = "Files"  # Emit formatted files
+make_backup = false  # Do not make backups

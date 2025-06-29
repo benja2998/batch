@@ -1,50 +1,79 @@
-# compiler.bat
+# benja2998/batch
+
+Batch compiler written in Rust
 
 ## Usage
 
-Test by running test.bat:
+Install the compiler:
 
-```powershell
-.\src\compiler.bat .\test\test.bat
+```bash
+make # .cargo/bin has to be in PATH
+# You can also run "make install", or "cargo install --path ." as they do the same thing
 ```
 
-You can also keep the asm code by running it like this:
+Run the compiler after installing:
 
-```powershell
-.\src\compiler.bat .\test\test.bat keep_asm # keep_asm HAS to be argument 2
+```bash
+make run ARGS="-h" # or "batch-compiler -h"
+```
+
+You can also try some of the tests:
+
+```bash
+make test1
 ```
 
 ## Limitations
 
-* Batch file must contain an exit that will always be executed.
-* Not all batch commands are implemented. We plan to implement all commands in the future.
+* Not all batch commands are supported (yet)
 
-## Non-limitations
+## Features
 
-* MUCH better performance than running the batch files directly, as it directly translates batch commands to assembly equivalents.
-
-## Commands
-
-* EXIT
-* ECHO
-* GOTO
-* :LABEL
-* All other batch commands are implemented via WinExec fallback and will not get the better performance.
+* Significantly faster than the `cmd.exe` interpreter
+* Runs on older Windows OSes that don't have the latest `cmd.exe` features
 
 ## Supported OSes
 
-* Windows
+### Compiler itself
 
-> [!IMPORTANT]
->
-> ### Windows for ARM compatibility
->
-> While it is not guaranteed, if you're on aarch64 you may be able to run compiled output via the built-in emulation.
+* All OSes that support modern Cargo
 
-## TODO
+### Compiled batch files
 
-* Add Linux support (medium priority)
-* Add macOS support (low priority)
-* Support all batch features (high priority)
-* Properly handle `@echo off`/`@echo on` instead of ignoring them (low priority)
-* Ability to compile itself (high priority)
+* All "Modern" versions of Windows (Windows Vista and later, but only tested on Windows 11)
+* Linux via Wine (no official support, untested)
+* Android via Termux & [Box64Droid](https://github.com/Ilya114/Box64Droid) (no official support, untested)
+* macOS via Wine (no official support, untested)
+
+## License
+
+The [Apache License 2.0](LICENSE).
+
+## FAQ
+
+**Q: Why did you make this?**
+A: There are still people writing batch files and I am one of them, but the problem is that the `cmd.exe` interpreter is slow.
+
+**Q: Why Rust?**
+
+A: Initially this project was written in batch, I decided to rewrite it in Rust because of how horrific the codebase was getting.
+
+**Q: How can I contact you privately?**
+
+A: You can contact me at [benja2998@duck.com](mailto:benja2998@duck.com). Responses won't be guaranteed as I don't look at it often.
+
+**Q: Will you add official Linux support?**
+
+A: Yes, but currently it is not a priority.
+
+**Q: Will you add official macOS support?**
+
+A: No.
+
+**Q: How can I contribute?**
+
+A: See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+**Q: What is batch?**
+
+A: Batch is a Windows scripting language developed by Microsoft. It is used in .cmd files, .bat files and the Windows command prompt.
