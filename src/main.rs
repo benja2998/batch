@@ -78,7 +78,7 @@ fn main()
     }
 
     println!("Begin compilation");
-    compile::compile(&statements, &args.output);
+    compile::compile(&statements, &args.output, &args.input);
     println!("Compilation complete");
 
     let duration = start_time.elapsed();
@@ -93,7 +93,7 @@ fn main()
             std::process::exit(1);
         }
         if which("lld-link").is_err() {
-            eprintln!("Error: 'lld-link' not found. Please install LLVM.");
+            eprintln!("Error: 'lld-link' not found. Please install LLVM via a package that includes lld-link.");
             std::process::exit(1);
         }
 
@@ -137,7 +137,7 @@ fn main()
 
         let nasm_status = Command::new("nasm")
             .arg("-f")
-            .arg("elf64")
+            .arg("win64")
             .arg(&asm_path)
             .arg("-o")
             .arg(format!("{}.o", output_filename))

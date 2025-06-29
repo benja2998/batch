@@ -1,3 +1,5 @@
+// Abstract syntax tree for the batch compiler
+
 use crate::tokenizer::{Token, TokenInfo};
 
 #[derive(Debug)]
@@ -18,6 +20,12 @@ pub enum Statement
     {
         label: String,
         invisible: bool,
+    },
+    EchoNewLine
+    {
+        value: Vec<String>,
+        invisible: bool,
+        redirection: Option<Redirection>,
     },
     Label(String),
     Rem(String),
@@ -160,6 +168,21 @@ pub fn parse(tokens: Vec<TokenInfo>) -> Vec<Statement>
                 let redirection = parse_redirections(&mut iter);
                 // Return echo statement with args invisible flag and optional redirection
                 Statement::Echo {
+                    value: args,
+                    invisible,
+                    redirection,
+                }
+            }
+
+            Token::EchoNewLine => {
+                // Collect all consecutive identifiers as arguments for echo
+                let mut args = Vec::new();
+                // Arguments will always be _NEW.LINE_
+                args.push(String::from("_NEW.LINE_"));
+                // Parse all redirections after arguments using helper function
+                let redirection = parse_redirections(&mut iter);
+                // Return echo statement with args invisible flag and optional redirection
+                Statement::EchoNewLine {
                     value: args,
                     invisible,
                     redirection,

@@ -20,17 +20,24 @@ make run ARGS="-h" # or "batch-compiler -h"
 You can also try some of the tests:
 
 ```bash
-make test1
+make test<num> # where <num> is the test number
 ```
 
 ## Limitations
 
-* Not all batch commands are supported (yet)
+* If the batch file has no `exit` commands that are **always** executed, it may lead to undefined behavior in the compiled binary.
 
 ## Features
 
 * Significantly faster than the `cmd.exe` interpreter
-* Runs on older Windows OSes that don't have the latest `cmd.exe` features
+
+## Currently supported batch features
+
+* Echo command
+* Exit command
+* Labels
+* Goto command
+* Comments (`rem` or `::`)
 
 ## Supported OSes
 
@@ -50,13 +57,6 @@ make test1
 The [Apache License 2.0](LICENSE).
 
 ## FAQ
-
-**Q: Why did you make this?**
-A: There are still people writing batch files and I am one of them, but the problem is that the `cmd.exe` interpreter is slow.
-
-**Q: Why Rust?**
-
-A: Initially this project was written in batch, I decided to rewrite it in Rust because of how horrific the codebase was getting.
 
 **Q: How can I contact you privately?**
 

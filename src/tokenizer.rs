@@ -2,6 +2,7 @@
 pub enum Token
 {
     Echo,
+    EchoNewLine,
     Exit,
     Goto,
     Rem,
@@ -71,7 +72,7 @@ pub fn tokenize(input: &str) -> Vec<TokenInfo>
                 chars.next();
                 Token::AmpersandOnlyIfSuccess
             } else {
-                Token::AmpersandAlways
+                Token::NewLine // Basically a new command
             };
             tokens.push(TokenInfo {
                 token,
@@ -155,6 +156,7 @@ pub fn tokenize(input: &str) -> Vec<TokenInfo>
             "exit" => Token::Exit,
             "goto" => Token::Goto,
             "rem" => Token::Rem,
+            "echo." => Token::EchoNewLine,
             _ => {
                 if let Ok(num) = word.parse::<i32>() {
                     Token::Integer(num)
