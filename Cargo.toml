@@ -1,0 +1,9 @@
+[package]
+name = "batch-compiler"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.40", features = ["derive"] }
+sha2 = "0.10.9"
+which = "8.0.0"

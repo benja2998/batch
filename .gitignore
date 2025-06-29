@@ -25,3 +25,7 @@
 *.rar
 *.bak
 *.swp
+
+# Added by cargo
+
+/target

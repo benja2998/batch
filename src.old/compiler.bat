@@ -1,5 +1,5 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal EnableDelayedExpansion
 
 title compiler.bat
 
@@ -34,6 +34,20 @@ if !errorlevel! neq 0 (
 ) else (
     echo lld-link is already installed.
 )
+
+rem Check if pwsh is installed
+where pwsh >nul 2>&1
+
+if !errorlevel! neq 0 (
+    echo PowerShell is not installed. Installing PowerShell using Winget...
+    winget install --id Microsoft.Powershell --source winget
+    if errorlevel! neq 0 (
+        echo Failed to install PowerShell using Winget.
+        start https://aka.ms/winget-cli
+        exit /b 1
+    )
+)
+set "PATH=%USERPROFILE%\scoop\shims;%USERPROFILE%\scoop\bin;%USERPROFILE%\scoop\apps\llvm\current\bin;%PATH%"
 
 goto check_architecture
 
@@ -155,6 +169,17 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
         set "rest=NEW_LINE"
     )
 
+    if "!section_data!"=="false" (
+        echo Adding section .data.
+        echo section .data >> "!output_asm_file!"
+        set "section_data=true"
+    )
+
+    findstr /c:"non_silent_msg db \"CMD^>\", 0" "!output_asm_file!" >nul
+    if !errorlevel! neq 0 (
+        echo    non_silent_msg db "CMD>", 0 >> "!output_asm_file!"
+    )
+
     rem Handle label
     if "!is_label!"=="true" (
         echo Label "!command!" will be handled later.
@@ -212,9 +237,9 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
         ) else (
             echo Non-echo/rem command detected: !command!
             if "!process_included!"=="false" (
-                echo Including WinExec...
+                echo Including CreateProcessA...
                 (
-                    echo extern WinExec
+                    echo extern CreateProcessA
                     type !output_asm_file!
                 ) > "%TEMP%\temp.asm"
                 move /y "%TEMP%\temp.asm" "!output_asm_file!" >nul
@@ -239,11 +264,7 @@ for /f "tokens=*" %%i in ('type "!source_file!"') do (
 
             if !errorlevel! neq 0 (
                 echo Adding new text to ASM file
-                if "!rest!"=="NEW_LINE" (
-                    echo    !hash! db 0x0D, 0x0A >> "!output_asm_file!"
-                ) else (
-                    echo    !hash! db "!rest!", 0Dh, 0Ah, 0 >> "!output_asm_file!"
-                )
+                echo    !hash! db "!rest!", 0Dh, 0Ah, 0 >> "!output_asm_file!"
                 echo Adding new text to ASM file: !hash!_len equ $ - !hash!
                 echo    !hash!_len equ $ - !hash! >> "!output_asm_file!"
             ) else (
@@ -267,146 +288,7 @@ if "!section_text!"=="false" (
 set "starttime=%time%"
 
 :: COMPILE LOOP ::
-for /f "tokens=*" %%i in ('type "!source_file!"') do (
-    set "line=%%i"
-    echo [1mCompiling line: !line![0m
-
-    rem Set command to first word in the line
-    for /f "tokens=1,*" %%j in ("!line!") do (
-        set "command=%%j"
-        set "rest=%%k"
-    )
-
-    rem Check if command is silent (@)
-    if "!command:~0,1!"=="@" (
-        set "command_silent=true"
-    ) else (
-        set "command_silent=false"
-    )
-
-    rem Check if it's a label (:)
-    if "!command:~0,1!"==":" (
-        set "is_label=true"
-        set "command=!command:~1!"
-        if "!command!"==":" (
-            echo Broken label detected. Skipping...
-            set "is_label=false"
-            set "command="
-        )
-    ) else (
-        set "is_label=false"
-    )
-
-    rem Remove '@' from silent command
-    if "!command_silent!"=="true" (
-        set "command=!command:~1!"
-
-        if "!command!"=="echo" (
-            rem TODO: implement proper handling
-            if "!rest!"=="off" (
-                set "rest="
-            ) else if "!rest!"=="on" (
-                set "rest="
-            )
-        )
-    )
-
-    rem Skip empty command
-    if "!command!"=="" (
-        echo Empty command. Skipping...
-        set "is_label=false"
-        set "command="
-    )
-
-    if "!command!"=="echo." (
-        set "command=echo"
-        set "rest=NEW_LINE"
-    )
-
-    rem Implement command handling
-    if "!is_label!"=="true" (
-        echo !command!: >> "!output_asm_file!"
-    ) else (
-        if "!command!"=="echo" (
-            if not "!rest!"=="" (
-                call "%~dp0lib\hash" "!rest!"
-                for /f "usebackq delims=" %%A in ("%TEMP%\hash.txt") do set "hash=%%A"
-
-                >> "!output_asm_file!" (
-                    echo ; echo !rest!
-                    echo sub rsp, 40
-                    echo mov ecx, -11
-                    echo call GetStdHandle
-                    echo mov rbx, rax
-                    echo mov rcx, rbx
-                    echo lea rdx, [rel !hash!]
-                    echo mov r8d, !hash!_len
-                    echo xor r9, r9
-                    echo mov qword [rsp+32], 0
-                    echo call WriteConsoleA
-                    echo add rsp, 40
-                )
-                echo [32mCompiled echo command successfully[0m
-            ) else (
-                echo [33mNo text to echo, skipping...[0m
-            )
-        ) else if "!command!"=="exit" (
-            >> "!output_asm_file!" (
-                echo ; exit
-                echo xor ecx, ecx
-                echo call ExitProcess
-            )
-            echo [32mCompiled exit command successfully[0m
-        ) else if "!command!"=="goto" (
-            if not "!rest!"=="" (
-                >> "!output_asm_file!" (
-                    echo ; goto !rest!
-                    echo jmp !rest!
-                )
-                echo [32mCompiled goto command successfully[0m
-            ) else (
-                echo [31mError: goto requires a label.[0m
-                exit /b 1
-            )
-        ) else if "!command!"=="rem" (
-            echo Skipping remark...
-        ) else (
-            if "!command!"=="" (
-                rem Nothing
-            ) else (
-                rem WinExec fallback for unrecognized commands
-                echo Treating as WinExec command: !command! !rest!
-                
-                call "%~dp0lib\hash" "!rest!"
-                for /f "usebackq delims=" %%A in ("%TEMP%\hash.txt") do set "hash=%%A"
-    
-                if "!section_data!"=="false" (
-                    echo section .data >> "!output_asm_file!"
-                    set "section_data=true"
-                )
-    
-                >> "!output_asm_file!" (
-                    echo ; !command! !rest!
-                    echo sub rsp, 32
-                    echo lea rcx, [rel !hash!]
-                    echo mov edx, 1  ; SW_SHOWNORMAL
-                    echo and rsp, -16
-                    echo call WinExec
-                    echo add rsp, 32
-                )
-
-                echo [32mCompiled WinExec command successfully[0m
-            )
-        )
-    )
-)
-
-(
-    echo ; Compiled from !source_file! by the "compiler.bat" compiler.
-    echo ; This is NOT the original source code.
-    type "!output_asm_file!"
-) > "%TEMP%\temp.asm"
-move /y "%TEMP%\temp.asm" "!output_asm_file!" >nul
+pwsh -NoProfile -Command "& { . '%~dp0lib\compile_loop.ps1' -InputFile '!source_file!' -OutputAsmFile '!output_asm_file!' }"
 
 echo Running: nasm -f win64 "!output_asm_file!" -o "!output_executable_no_ext!.obj"
 
@@ -434,14 +316,14 @@ del "%TEMP%\temp.asm" /s /q >nul 2>&1
 set "endtime=%time%"
 
 :: Calculate elapsed time
-call :TimeDiff "%starttime%" "%endtime%" elapsed
+call :time_diff "%starttime%" "%endtime%" elapsed
 
 echo [1mCompilation time: !elapsed![0m
 
 exit /b
 
 :: Function to calculate time difference between %1=start and %2=end in HH:MM:SS.xx format, output in variable %3
-:TimeDiff
+:time_diff
 setlocal
 set "start=%~1"
 set "end=%~2"
