@@ -7,20 +7,6 @@ We welcome contributions from the community, but they must follow these guidelin
 * Your code should follow the style of the rest of the code.
   * Use proper tabbing.
   * Use proper indentation.
-* Your code should have comments documenting what it does.
-
-    For example, do this:
-
-    ```batch
-    rem Set foo to bar
-    set foo=bar
-    ```
-
-    And not this:
-
-    ```batch
-    set foo=bar
-    ```
 
 ## Where to start?
 

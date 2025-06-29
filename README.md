@@ -26,6 +26,7 @@ make test<num> # where <num> is the test number
 ## Limitations
 
 * If the batch file has no `exit` commands that are **always** executed, it may lead to undefined behavior in the compiled binary.
+* Many batch features are not supported, such as variaables, `if` statements, `for` loops, etc.
 
 ## Features
 
