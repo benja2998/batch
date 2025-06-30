@@ -1,6 +1,6 @@
 # benja2998/batch
 
-Batch compiler written in Rust
+Batch compiler written in [Rust](https://rust-lang.org)
 
 ## Usage
 
@@ -20,17 +20,17 @@ make run ARGS="-h" # or "batch-compiler -h"
 You can also try some of the tests:
 
 ```bash
-make test<num> # where <num> is the test number
+make test<num> # where <num> is the test number. Currently, there are only 3 tests
 ```
 
 ## Limitations
 
 * If the batch file has no `exit` commands that are **always** executed, it may lead to undefined behavior in the compiled binary.
-* Many batch features are not supported, such as variaables, `if` statements, `for` loops, etc.
+* Many batch features are not supported, such as `if` statements, `for` loops, delayed variable expansion, etc.
 
 ## Features
 
-* Significantly faster than the `cmd.exe` interpreter
+* Significantly faster than the Windows `cmd.exe` interpreter
 
 ## Currently supported batch features
 
@@ -39,6 +39,8 @@ make test<num> # where <num> is the test number
 * Labels
 * Goto command
 * Comments (`rem` or `::`)
+* Set command
+* %VAR% variable syntax
 
 ## Supported OSes
 
@@ -48,10 +50,10 @@ make test<num> # where <num> is the test number
 
 ### Compiled batch files
 
-* All "Modern" versions of Windows (Windows Vista and later, but only tested on Windows 11)
-* Linux via Wine (no official support, untested)
-* Android via Termux & [Box64Droid](https://github.com/Ilya114/Box64Droid) (no official support, untested)
-* macOS via Wine (no official support, untested)
+* All "Modern" versions of [Windows](https://windows.com) ([Windows Vista](https://en.wikipedia.org/wiki/Windows_Vista) and later, but only tested on [Windows 11](https://www.microsoft.com/en-gb/windows/get-windows-11))
+* [Linux](https://en.wikipedia.org/wiki/Linux) via [Wine](https://winehq.org) (no official support, untested)
+* [Android](https://android.com) via Termux & [Box64Droid](https://github.com/Ilya114/Box64Droid) (no official support, untested)
+* [macOS](https://apple.com/macos) via [Wine](https://winehq.org) (no official support, untested)
 
 ## License
 
@@ -77,4 +79,4 @@ A: See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 **Q: What is batch?**
 
-A: Batch is a Windows scripting language developed by Microsoft. It is used in .cmd files, .bat files and the Windows command prompt.
+A: [Batch](https://en.wikipedia.org/wiki/Batch_file) is a [Windows](https://windows.com) scripting language developed by [Microsoft](https://microsoft.com). It is used in .cmd files, .bat files and the [Windows command prompt](https://en.wikipedia.org/wiki/Cmd.exe).

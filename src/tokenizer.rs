@@ -7,8 +7,7 @@ pub enum Token
     Goto,
     Rem,
     Label,
-    VariablePercentSign,
-    VariableDelayedExpansion,
+    Set,
     RedirectionOverwriteFile,
     RedirectionAppendFile,
     RedirectionStderrOverwriteFile,
@@ -157,6 +156,7 @@ pub fn tokenize(input: &str) -> Vec<TokenInfo>
             "goto" => Token::Goto,
             "rem" => Token::Rem,
             "echo." => Token::EchoNewLine,
+            "set" => Token::Set,
             _ => {
                 if let Ok(num) = word.parse::<i32>() {
                     Token::Integer(num)

@@ -1,4 +1,5 @@
 mod compile;
+mod expand_vars;
 mod parse;
 mod tokenizer;
 
@@ -70,12 +71,16 @@ fn main()
     }
 
     println!("Begin parsing");
-    let statements = parse::parse(tokens);
+    let mut statements = parse::parse(tokens);
     println!("Parsing complete");
     println!("Statements: {}", statements.len());
     for stmt in &statements {
         println!("{:?}", stmt);
     }
+
+    println!("Begin variable expansion");
+    expand_vars::expand_vars(&args.input, &mut statements);
+    println!("Variable expansion complete");
 
     println!("Begin compilation");
     compile::compile(&statements, &args.output, &args.input);
@@ -93,7 +98,9 @@ fn main()
             std::process::exit(1);
         }
         if which("lld-link").is_err() {
-            eprintln!("Error: 'lld-link' not found. Please install LLVM via a package that includes lld-link.");
+            eprintln!(
+                "Error: 'lld-link' not found. Please install LLVM via a package that includes lld-link."
+            );
             std::process::exit(1);
         }
 

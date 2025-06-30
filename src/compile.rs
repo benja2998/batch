@@ -99,8 +99,24 @@ pub fn compile(statements: &[Statement], output_filename: &str, input_filename: 
                 println!("New line");
             }
 
-            Statement::EchoNewLine { value, invisible, redirection } => {
+            Statement::EchoNewLine {
+                value,
+                invisible,
+                redirection,
+            } => {
                 println!("Echo new line");
+            }
+
+            Statement::Set {
+                variable,
+                value,
+                invisible,
+            } => {
+                println!("Set variable: {}", variable.join(" "));
+                println!("Value: {}", value);
+
+                // Set is handled in expand_vars.rs before compilation
+                // This is because batch works by expanding variables
             }
 
             stmt => {
@@ -289,6 +305,18 @@ fn compile_phase_2(statements: &[Statement], output_filename: &str)
                 // Translate it to a ;
                 println!("Rem: {}", comment);
                 writeln!(asm_file, "; {}", comment).unwrap();
+            }
+
+            Statement::Set {
+                variable,
+                value,
+                invisible,
+            } => {
+                println!("Set variable: {}", variable.join(" "));
+                println!("Value: {}", value);
+
+                // Set is handled in expand_vars.rs before compilation
+                // This is because batch works by expanding variables
             }
 
             Statement::NewLine => {
