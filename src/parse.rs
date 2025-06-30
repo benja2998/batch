@@ -42,6 +42,7 @@ pub enum Statement
     AmpersandOnlyIfSuccess,
     AmpersandAlways,
     NewLine,
+    Identifier(String),
     Unknown(TokenInfo),
 }
 
@@ -108,6 +109,7 @@ where
                     break;
                 }
             }
+
             Token::RedirectionStderrOverwriteFile => {
                 // Consume the redirection token '2>'
                 iter.next();
@@ -125,6 +127,7 @@ where
                     break;
                 }
             }
+
             Token::RedirectionStderrAppendFile => {
                 // Consume the redirection token '2>>'
                 iter.next();
@@ -195,6 +198,12 @@ pub fn parse(tokens: Vec<TokenInfo>) -> Vec<Statement>
                 }
             }
 
+            Token::Identifier(identifier) => {
+                // It is an identifier, so it is not a command
+                // Return the identifier as a statement
+                Statement::Identifier(identifier)
+            }
+
             Token::Exit => {
                 let mut args = Vec::new();
                 while let Some(token_info) = iter.peek() {
@@ -234,8 +243,16 @@ pub fn parse(tokens: Vec<TokenInfo>) -> Vec<Statement>
 
                 let variable = parts[0].to_string();
                 // Convert variable to Vec<String>
-                let variable: Vec<String> = variable.split(' ').map(|s| s.to_string()).collect();
+                //let variable: Vec<String> = variable.split(' ').map(|s| s.to_string()).collect();
                 let value = parts[1].to_string();
+
+                // Strip out trailing quotes from value
+                let value = value.trim_matches('"').to_string();
+                // Strip out trailing quotes from variable
+                let variable = variable.trim_matches('"').to_string();
+
+                // Convert variable to Vec<String>
+                let variable: Vec<String> = variable.split(' ').map(|s| s.to_string()).collect();
 
                 Statement::Set {
                     variable,

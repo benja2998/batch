@@ -30,6 +30,14 @@ make test<num> # where <num> is the test number. Currently, there are only 3 tes
 
 * If the batch file has no `exit` commands that are **always** executed, it may lead to undefined behavior in the compiled binary.
 * Many batch features are not supported, such as `if` statements, `for` loops, delayed variable expansion, etc.
+* Doing this:
+
+```batch
+set command=calc.exe
+%command%
+```
+
+will not work properly!
 
 ## Features
 
@@ -65,17 +73,17 @@ The compiler architecture goes like this:
 ```mermaid
 flowchart TD
   A[Batch file is provided as input] --> B[Compiler reads and tokenizes the batch file]
-  B --> C[Tokens are generated]
+  B --> C[Tokens]
   C --> D[Compiler grows the parse tree]
-  D --> E[Parse tree is generated]
+  D --> E[Parse tree]
   E --> F[Variables in the batch file are expanded]
-  F --> G[Updated parse tree is generated]
+  F --> G[Updated parse tree]
   G --> H[Compiler does two passes over the parse tree to generate assembly code]
-  H --> I[Assembly code is generated]
+  H --> I[Assembly code]
   I --> J[Compiler calls NASM to assemble the code]
-  J --> K[Object file is generated]
+  J --> K[Object file]
   K --> L[Compiler calls a linker to produce the executable]
-  L --> M[Executable is generated]
+  L --> M[Executable]
 ```
 
 ## License
