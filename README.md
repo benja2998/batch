@@ -58,6 +58,26 @@ make test<num> # where <num> is the test number. Currently, there are only 3 tes
 * [Android](https://android.com) via Termux & [Box64Droid](https://github.com/Ilya114/Box64Droid) (no official support, untested)
 * [macOS](https://apple.com/macos) via [Wine](https://winehq.org) (no official support, untested)
 
+## How it works
+
+The compiler architecture goes like this:
+
+```mermaid
+flowchart TD
+  A[Batch file is provided as input] --> B[Compiler reads and tokenizes the batch file]
+  B --> C[Tokens are generated]
+  C --> D[Compiler grows the parse tree]
+  D --> E[Parse tree is generated]
+  E --> F[Variables in the batch file are expanded]
+  F --> G[Updated parse tree is generated]
+  G --> H[Compiler does two passes over the parse tree to generate assembly code]
+  H --> I[Assembly code is generated]
+  I --> J[Compiler calls NASM to assemble the code]
+  J --> K[Object file is generated]
+  K --> L[Compiler calls a linker to produce the executable]
+  L --> M[Executable is generated]
+```
+
 ## License
 
 The [Apache License 2.0](LICENSE).
