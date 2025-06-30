@@ -11,7 +11,8 @@ goto main3
 
 set foo=2
 echo %foo%
-exit /b 0
+set exitcode=0
+exit /b %exitcode%
 
 :main3
 

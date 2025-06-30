@@ -25,9 +25,18 @@ pub fn expand_vars(input_file: &str, statements: &mut [Statement])
                 Statement::Set {
                     variable, value, ..
                 } => {
-                    if let Some(var_name) = variable.first() {
-                        vars.insert(var_name.clone(), value.clone());
-                    }
+                    // Expand strings and trim whitespace and quotes
+                    let variable = expand_string(&variable[0], &vars)
+                        .trim()
+                        .trim_matches('"')
+                        .to_string();
+                    let value = expand_string(value, &vars)
+                        .trim()
+                        .trim_matches('"')
+                        .to_string();
+                    vars.insert(variable, value);
+                    // Print the vars
+                    println!("vars: {}", vars.iter().map(|(k, v)| format!("{}: {}", k, v)).collect::<Vec<_>>().join(", "));
                     idx += 1;
                 }
 
@@ -39,13 +48,20 @@ pub fn expand_vars(input_file: &str, statements: &mut [Statement])
                 }
 
                 Statement::Goto { label, .. } => {
-                    if let Some(&target_idx) = label_map.get(label) {
+                    // Expand the label
+                    let label = expand_string(label, &vars);
+                    if let Some(&target_idx) = label_map.get(&label) {
                         queue.push_back((target_idx, vars.clone()));
                     }
                     break; // Stop current linear flow
                 }
 
-                Statement::Exit { .. } => break,
+                Statement::Exit { value, .. } => {
+                    for val in value.iter_mut() {
+                        *val = expand_string(val, &vars);
+                    }
+                    break;
+                }
 
                 Statement::Label(name) => {
                     let var_snapshot = visited.entry(name.clone()).or_insert(Vec::new());
@@ -56,18 +72,35 @@ pub fn expand_vars(input_file: &str, statements: &mut [Statement])
                     idx += 1;
                 }
 
+                Statement::Identifier(name) => {
+                    // Expand the identifier
+                    let name = expand_string(name, &vars);
+                    if let Some(value) = vars.get(&name) {
+                        print!("{}", value);
+                    }
+                    idx += 1;
+                }
+
                 _ => idx += 1,
             }
         }
     }
 }
 
-// Replaces %VAR% in a string with values from `vars`
+// Replaces %VAR% in a string with values from `vars`, stripping quotes from replacements
 fn expand_string(input: &str, vars: &HashMap<String, String>) -> String
 {
-    let re = regex::Regex::new(r"%([^%]+)%").unwrap();
+    let re = regex::Regex::new(r#"%([^%]+)%"#).unwrap();
     re.replace_all(input, |caps: &regex::Captures| {
-        vars.get(&caps[1]).cloned().unwrap_or_default()
+        if let Some(val) = vars.get(&caps[1]) {
+            if val.starts_with('"') && val.ends_with('"') && val.len() >= 2 {
+                val[1..val.len() - 1].to_string()
+            } else {
+                val.clone()
+            }
+        } else {
+            String::new()
+        }
     })
     .into_owned()
 }
