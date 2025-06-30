@@ -25,18 +25,37 @@ pub fn expand_vars(input_file: &str, statements: &mut [Statement])
                 Statement::Set {
                     variable, value, ..
                 } => {
-                    // Expand strings and trim whitespace and quotes
-                    let variable = expand_string(&variable[0], &vars)
-                        .trim()
-                        .trim_matches('"')
-                        .to_string();
-                    let value = expand_string(value, &vars)
-                        .trim()
-                        .trim_matches('"')
-                        .to_string();
-                    vars.insert(variable, value);
+                    // Expand variable name (first token only)
+                    let var_name = if variable.is_empty() {
+                        // Skip if no variable name
+                        idx += 1;
+                        continue;
+                    } else {
+                        expand_string(&variable[0], &vars)
+                            .trim()
+                            .trim_matches('"')
+                            .to_string()
+                    };
+
+                    let val_str: String = value
+                        .chars()
+                        .map(|c| {
+                            let s = c.to_string(); // Convert char to String
+                            expand_string(&s, &vars) // Convert to &str with &
+                        })
+                        .collect::<Vec<_>>()
+                        .join("");
+                    let val_str = val_str.trim().trim_matches('"').to_string();
+
+                    vars.insert(var_name, val_str);
                     // Print the vars
-                    println!("vars: {}", vars.iter().map(|(k, v)| format!("{}: {}", k, v)).collect::<Vec<_>>().join(", "));
+                    println!(
+                        "vars: {}",
+                        vars.iter()
+                            .map(|(k, v)| format!("{}: {}", k, v))
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    );
                     idx += 1;
                 }
 
@@ -73,11 +92,8 @@ pub fn expand_vars(input_file: &str, statements: &mut [Statement])
                 }
 
                 Statement::Identifier(name) => {
-                    // Expand the identifier
-                    let name = expand_string(name, &vars);
-                    if let Some(value) = vars.get(&name) {
-                        print!("{}", value);
-                    }
+                    // Expand the identifier name
+                    *name = expand_string(name, &vars);
                     idx += 1;
                 }
 

@@ -16,7 +16,6 @@ pub enum Token
     AmpersandAlways,
     NewLine,
     CmdLineOption,
-    Integer(i32),
     String(String),
     Identifier(String),
 }
@@ -33,6 +32,7 @@ pub fn tokenize(input: &str) -> Vec<TokenInfo>
     let mut tokens = Vec::new();
     let mut chars = input.chars().peekable();
     let mut next_invisible = false;
+    let mut is_after_newline = true;
 
     while let Some(&ch) = chars.peek() {
         // Skip carriage returns to handle Windows CRLF newlines
@@ -61,6 +61,7 @@ pub fn tokenize(input: &str) -> Vec<TokenInfo>
             });
             chars.next();
             next_invisible = false;
+            is_after_newline = true;
             continue;
         }
 
@@ -78,6 +79,7 @@ pub fn tokenize(input: &str) -> Vec<TokenInfo>
                 invisible: next_invisible,
             });
             next_invisible = false;
+            is_after_newline = true;
             continue;
         }
 
@@ -151,18 +153,14 @@ pub fn tokenize(input: &str) -> Vec<TokenInfo>
         }
 
         let token = match word.to_ascii_lowercase().as_str() {
-            "echo" => Token::Echo,
-            "exit" => Token::Exit,
-            "goto" => Token::Goto,
-            "rem" => Token::Rem,
-            "echo." => Token::EchoNewLine,
-            "set" => Token::Set,
+            "echo" if is_after_newline => Token::Echo,
+            "exit" if is_after_newline => Token::Exit,
+            "goto" if is_after_newline => Token::Goto,
+            "rem" if is_after_newline => Token::Rem,
+            "echo." if is_after_newline => Token::EchoNewLine,
+            "set" if is_after_newline => Token::Set,
             _ => {
-                if let Ok(num) = word.parse::<i32>() {
-                    Token::Integer(num)
-                } else {
-                    Token::Identifier(word)
-                }
+                Token::Identifier(word)
             }
         };
 
@@ -171,6 +169,7 @@ pub fn tokenize(input: &str) -> Vec<TokenInfo>
             invisible: next_invisible,
         });
         next_invisible = false;
+        is_after_newline = false;
     }
 
     tokens

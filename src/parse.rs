@@ -200,7 +200,18 @@ pub fn parse(tokens: Vec<TokenInfo>) -> Vec<Statement>
 
             Token::Identifier(identifier) => {
                 // It is an identifier, so it is not a command
-                // Return the identifier as a statement
+                // Merge all consecutive identifier as a single identifier until we reach a NewLine
+                let mut identifier = identifier;
+                while let Some(TokenInfo {
+                    token: Token::Identifier(next_identifier),
+                    ..
+                }) = iter.peek()
+                {
+                    identifier.push(' ');
+                    identifier.push_str(&next_identifier);
+                    iter.next();
+                }
+
                 Statement::Identifier(identifier)
             }
 
@@ -210,10 +221,6 @@ pub fn parse(tokens: Vec<TokenInfo>) -> Vec<Statement>
                     match &token_info.token {
                         Token::Identifier(arg) => {
                             args.push(arg.clone());
-                            iter.next();
-                        }
-                        Token::Integer(num) => {
-                            args.push(num.to_string());
                             iter.next();
                         }
                         _ => break,
@@ -236,28 +243,36 @@ pub fn parse(tokens: Vec<TokenInfo>) -> Vec<Statement>
                         _ => break,
                     }
                 }
-                // Split args into variable and value by '=' and store each part in variable and
-                // value
-                let args_str = args.join("");
-                let parts: Vec<&str> = args_str.split('=').collect();
 
-                let variable = parts[0].to_string();
-                // Convert variable to Vec<String>
-                //let variable: Vec<String> = variable.split(' ').map(|s| s.to_string()).collect();
-                let value = parts[1].to_string();
+                // Find the first '=' to split variable and value
+                let joined_args = args.join(" ");
+                if let Some(equal_pos) = joined_args.find('=') {
+                    let (var_part, val_part) = joined_args.split_at(equal_pos);
 
-                // Strip out trailing quotes from value
-                let value = value.trim_matches('"').to_string();
-                // Strip out trailing quotes from variable
-                let variable = variable.trim_matches('"').to_string();
+                    let mut variable = var_part.trim().to_string();
+                    // Get everything after the '=' (skip the '=' itself)
+                    let mut value = val_part[1..].trim().to_string();
 
-                // Convert variable to Vec<String>
-                let variable: Vec<String> = variable.split(' ').map(|s| s.to_string()).collect();
+                    // Strip quotes from both ends if they exist (even if only on one side)
+                    if value.starts_with('"') || value.ends_with('"') {
+                        value = value.trim_matches('"').to_string();
+                    }
 
-                Statement::Set {
-                    variable,
-                    value,
-                    invisible,
+                    if variable.starts_with('"') || variable.ends_with('"') {
+                        variable = variable.trim_matches('"').to_string();
+                    }
+
+                    let variable: Vec<String> =
+                        variable.split_whitespace().map(|s| s.to_string()).collect();
+
+                    Statement::Set {
+                        variable,
+                        value,
+                        invisible,
+                    }
+                } else {
+                    // Handle error case where there's no '='
+                    panic!("Invalid SET statement: no '=' found");
                 }
             }
 
@@ -286,7 +301,6 @@ pub fn parse(tokens: Vec<TokenInfo>) -> Vec<Statement>
                     // identifiers)
                     match &next_token_info.token {
                         Token::Identifier(word) => comment.push_str(word),
-                        Token::Integer(num) => comment.push_str(&num.to_string()),
                         Token::Exit => comment.push_str("exit"),
                         Token::Echo => comment.push_str("echo"),
                         Token::Goto => comment.push_str("goto"),

@@ -119,6 +119,65 @@ pub fn compile(statements: &[Statement], output_filename: &str, input_filename: 
                 // This is because batch works by expanding variables
             }
 
+            Statement::Identifier(identifier) => {
+                println!("Identifier: {}", identifier);
+                // Must be an external command
+                // That means we must use CreateProcessA
+
+                // Hash the identifier
+                let mut hasher = Sha256::new();
+                hasher.update(identifier.as_bytes());
+                let hash = hasher.finalize();
+
+                let hash_str = format!("{:x}", hash);
+
+                let mut string_to_write = format!(
+                    r#"
+    l{} db "{}", 0
+"#,
+                    hash_str, identifier
+                );
+
+                let mut second_string_to_write = format!(
+                    r#"
+    startupInfo:
+        .cb              dd 104
+        .lpReserved      dq 0
+        .lpDesktop       dq 0
+        .lpTitle         dq 0
+        .dwX             dd 0
+        .dwY             dd 0
+        .dwXSize         dd 0
+        .dwYSize         dd 0
+        .dwXCountChars   dd 0
+        .dwYCountChars   dd 0
+        .dwFillAttribute dd 0
+        .dwFlags         dd 0
+        .wShowWindow    dw 0
+        .cbReserved2    dw 0
+        .lpReserved2     dq 0
+        .hStdInput       dq 0
+        .hStdOutput      dq 0
+        .hStdError       dq 0
+    processInfo:
+        .hProcess    dq 0
+        .hThread     dq 0
+        .dwProcessId dd 0
+        .dwThreadId  dd 0
+"#,
+                );
+
+                // Read the current file contents to check for existing labels
+                let file_contents = std::fs::read_to_string(&asm_filename).unwrap();
+                if !file_contents.contains("processInfo") && !file_contents.contains("startupInfo") {
+                    // Write the second string to the asm file
+                    writeln!(asm_file, "{}", second_string_to_write).unwrap();
+                }
+
+                // Write the string to the asm file
+                writeln!(asm_file, "{}", string_to_write).unwrap();
+            }
+
             stmt => {
                 println!("Unhandled statement: {:?}", stmt);
             }
@@ -322,6 +381,43 @@ fn compile_phase_2(statements: &[Statement], output_filename: &str)
             Statement::NewLine => {
                 // Append a new line to the asm file
                 writeln!(asm_file).unwrap();
+            }
+
+            Statement::Identifier(identifier) => {
+                println!("Identifier: {}", identifier);
+                // Must be an external command
+                // That means we must use CreateProcessA
+
+                // Hash the identifier
+                let mut hasher = Sha256::new();
+                hasher.update(identifier.as_bytes());
+                let hash = hasher.finalize();
+
+                let hash_str = format!("{:x}", hash);
+
+                let mut string_to_write = format!(
+                    r#"
+sub rsp,72
+xor rcx,rcx
+lea rdx,[rel l{}]
+xor r8,r8
+xor r9,r9
+mov qword[rsp+32],0
+mov qword[rsp+40],0
+mov qword[rsp+48],0
+mov qword[rsp+56],0
+lea rax,[rel startupInfo]
+mov [rsp+64],rax
+lea rax,[rel processInfo]
+mov [rsp+72],rax
+call CreateProcessA
+add rsp,72
+"#,
+                    hash_str
+                );
+
+                // Write the string to the asm file
+                asm_file.write_all(string_to_write.as_bytes()).unwrap();
             }
 
             stmt => {
