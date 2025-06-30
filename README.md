@@ -28,8 +28,8 @@ make test<num> # where <num> is the test number. Currently, there are only 3 tes
 
 ## Limitations
 
-* If the batch file has no `exit` commands that are **always** executed, it may lead to undefined behavior in the compiled binary.
-* Many batch features are not supported, such as `if` statements, `for` loops, delayed variable expansion, etc.
+* If the batch file has no `exit` commands that are **always** executed, it may lead to undefined behavior in the compiled binary
+* Many batch features are not supported, such as `if` statements, `for` loops, delayed variable expansion, etc
 * Doing this:
 
 ```batch
@@ -37,11 +37,15 @@ set command=calc.exe
 %command%
 ```
 
-will not work properly!
+will only work if it is an external command, not a built-in command
 
 ## Features
 
-* Significantly faster than the Windows `cmd.exe` interpreter
+* Compiled output is around 30% faster than the Windows `cmd.exe` due to the executable using native Windows APIs and native CPU instructions
+
+## Benchmarking
+
+You can benchmark the compiler by running `benchmark.bat`.
 
 ## Currently supported batch features
 
@@ -52,6 +56,7 @@ will not work properly!
 * Comments (`rem` or `::`)
 * Set command
 * %VAR% variable syntax
+* Calling external commands
 
 ## Supported OSes
 
