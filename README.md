@@ -2,6 +2,9 @@
 
 Batch compiler written in [Rust](https://rust-lang.org)
 
+> [!IMPORTANT]
+> This compiler is incomplete. Consider contributing!
+
 ## Usage
 
 Install the compiler:
