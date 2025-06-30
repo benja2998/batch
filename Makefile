@@ -16,5 +16,10 @@ test2:
 	clear
 	batch-compiler -o test.exe -i examples\labels.bat
 
+test3:
+	cargo install --path .
+	clear
+	batch-compiler -o test.exe -i examples\vars.bat
+
 clean:
 	cargo clean

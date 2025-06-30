@@ -29,6 +29,12 @@ pub enum Statement
     },
     Label(String),
     Rem(String),
+    Set
+    {
+        variable: Vec<String>,
+        value: String,
+        invisible: bool,
+    },
     RedirectionOverwriteFile(String),
     RedirectionAppendFile(String),
     RedirectionStderrOverwriteFile(String),
@@ -206,6 +212,34 @@ pub fn parse(tokens: Vec<TokenInfo>) -> Vec<Statement>
                 }
                 Statement::Exit {
                     value: args,
+                    invisible,
+                }
+            }
+
+            Token::Set => {
+                let mut args = Vec::new();
+                while let Some(token_info) = iter.peek() {
+                    match &token_info.token {
+                        Token::Identifier(arg) => {
+                            args.push(arg.clone());
+                            iter.next();
+                        }
+                        _ => break,
+                    }
+                }
+                // Split args into variable and value by '=' and store each part in variable and
+                // value
+                let args_str = args.join("");
+                let parts: Vec<&str> = args_str.split('=').collect();
+
+                let variable = parts[0].to_string();
+                // Convert variable to Vec<String>
+                let variable: Vec<String> = variable.split(' ').map(|s| s.to_string()).collect();
+                let value = parts[1].to_string();
+
+                Statement::Set {
+                    variable,
+                    value,
                     invisible,
                 }
             }
