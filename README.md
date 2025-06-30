@@ -41,7 +41,7 @@ will only work if it is an external command, not a built-in command
 
 ## Features
 
-* Compiled output is around 30% faster than the Windows `cmd.exe` due to the executable using native Windows APIs and native CPU instructions
+* Compiled output is significantly faster than the Windows `cmd.exe` due to the executable using native Windows APIs and native CPU instructions
 
 ## Benchmarking
 
