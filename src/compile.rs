@@ -133,7 +133,7 @@ pub fn compile(statements: &[Statement], output_filename: &str, input_filename: 
 
                 let mut string_to_write = format!(
                     r#"
-    l{} db "{}", 0
+    l{} db "cmd /c @{}", 0
 "#,
                     hash_str, identifier
                 );
@@ -395,7 +395,7 @@ fn compile_phase_2(statements: &[Statement], output_filename: &str)
 
                 let hash_str = format!("{:x}", hash);
 
-                let mut string_to_write = format!(
+                let string_to_write = format!(
                     r#"
 sub rsp,72
 xor rcx,rcx
