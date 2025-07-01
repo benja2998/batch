@@ -21,5 +21,10 @@ test3:
 	clear
 	batch-compiler -o test.exe -i examples\vars.bat
 
+test4:
+	cargo install --path .
+	clear
+	batch-compiler -o test.exe -i examples\invalid_command.bat
+
 clean:
 	cargo clean
